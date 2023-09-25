@@ -14,10 +14,10 @@ def session_scrape(session_num, df):
     session_text = BeautifulSoup(url.content, "html.parser")
     body = session_text.find('tbody')
     session_bills = body.find_all('tr')
-    
+
     # Loop gathering information for every bill in the session
     for bill in session_bills:
-        bill_info = bill.find_all('td')
+        bill_info = bill.find_all('td') # Simplifying the text into smaller chunks
 
         bill_dict = {} # Empty dict to append to the DataFrame at the end of the loop
         bill_dict['bill_num'] = bill_info[0].text
