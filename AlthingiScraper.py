@@ -32,7 +32,16 @@ def session_scrape(session_num, df):
             bill_dict['reader_minister'] = 0
         bill_dict['reader_link'] = re.search(r'(?<=a href=")[\s\S][^"]+', str(bill_info[3]))[0]
         
+        # Create a unique id for the bill (Format: bill_num + _year)
+        bill_dict['bill_id'] = str(bill_dict['bill_num']) + str(bill_dict['bill_date'][-4:])
         # Append data to the DataFrame
         df = pd.concat([df, pd.DataFrame([bill_dict])])
     # Return the changed DataFrame
     return df
+
+# def bill_scrape(bill_url, three_debates_only = False, debate_text = False):
+#     # Check if bill went through all three debates
+
+#     # Collect data on bill
+
+#     # Collect text of debates
