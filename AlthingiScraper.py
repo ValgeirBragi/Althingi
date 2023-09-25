@@ -39,9 +39,14 @@ def session_scrape(session_num, df):
     # Return the changed DataFrame
     return df
 
-# def bill_scrape(bill_url, three_debates_only = False, debate_text = False):
-#     # Check if bill went through all three debates
+def bill_scrape(bill_url, three_debates_only = False, debate_text = False):
+    url = req.get(bill_url)
+    bill_soup = BeautifulSoup(url.content, "html.parser")
+    # Check if bill went through all three debates and filter out those that didn't
+    if three_debates_only == True: # Check if filter is enabled
+        print(bill_soup)
 
-#     # Collect data on bill
+    # Collect data on bill
 
-#     # Collect text of debates
+    # Collect text of debates
+
