@@ -42,7 +42,11 @@ def session_scrape(session_num, df):
     # Return the changed DataFrame
     return df
 
+# Scrapes the page of the bill, should later only be used inside a bigger function in this script
 def bill_scrape(bill_url, three_debates_only = False, debate_text = False):
+
+    #IMPORTANT: Sometimes there's an extra table for committee discussions. I'll have to filter them out or create a seperate clause
+
     url             = req.get(bill_url)
     bill_soup       = BeautifulSoup(url.content, "html.parser")
     debate_count    = bill_soup.find_all(class_ = 'clearboth')
@@ -62,37 +66,41 @@ def bill_scrape(bill_url, three_debates_only = False, debate_text = False):
 
     # Only new information on first table is the link to the proposed bill
     bill_dict['bill_proposal_link'] = page_tables[0].find('a')['href']
-    
-    # Debate 1
-    # Current version only works if there is one debate
+
+    # If page_tables is an odd number, then the third table is a committee table, move it from the list
+    if len(page_tables) % 2 != 0:
+        committee_table = page_tables.pop(3)
+
+    # Function that goes through a debate table and collects relevant data
     # Note: Element [1] is a link to the day's meeting, didn't feel necessary to include
     # Note: Outside the table, the head of the committee the bill goes to is mentioned, could be worth to scrape in later versions
-    blocks = page_tables[1].find_all('td')
-    bill_dict['first_debate_date']      = blocks[0].text
-    bill_dict['first_debate_timestamp'] = blocks[2].text[:-8]
-    bill_dict['first_debate_link']      = blocks[2].find('a')['href']
-    bill_dict['first_debate_vote_link'] = blocks[3].find('a')['href']
-    print(len(blocks))
     def debate_table_scrape(prefix, table):
         blocks = table.find_all('td')
-        row_count = len(blocks)/4 # Checks if sessions are split/each row has four columns
-        for i in range(1)
-        #while(block_count > 0): # Turning the code into a while loop once it's tested
+        row_count = int(len(blocks)/4) # Each row has four columns
+        for i in range(0, row_count):
+            # Add an affix if there's a continued debate
+            if i > 0:
+                affix = '_' + str(i+1)
+            else:
+                affix = ''
+            bill_dict['{}_debate_date{}'.format(prefix, affix)]      = blocks[0+i*4].text
+            bill_dict['{}_debate_timestamp{}'.format(prefix, affix)] = blocks[2+i*4].text[:-8]
+            bill_dict['{}_debate_link{}'.format(prefix, affix)]      = blocks[2+i*4].find('a')['href']
+            try: # There should only be one vote per debate
+                bill_dict['{}_debate_vote_link'.format(prefix)] = blocks[3+i*4].find('a')['href']
+            except:
+                pass
+    
+    # Scrape the debate tables
+    debate_table_scrape('first', page_tables[1])
+    debate_table_scrape('second', page_tables[3])
+    debate_table_scrape('third', page_tables[4])
+    
+    # TODO: Collect final bill
+    # TODO: Collect text of debates
 
+    return bill_dict
 
-            #block_count += -4
-
-    # for table in page_tables:
-    #     links = table.find_all('a')
-    #     print(len(links))
-    #     #print(links[0].get("href"))
-
-    #print(page_tables[0])
-    # Collect data on bill
-
-    # Collect text of debates
-
-
-# Temporary for testing purposes
-bill_scrape('https://www.althingi.is/thingstorf/thingmalalistar-eftir-thingum/ferill/151/443/?ltg=151&mnr=443', 
-            three_debates_only = False)
+# Testing
+# bill_scrape('https://www.althingi.is/thingstorf/thingmalalistar-eftir-thingum/ferill/151/443/?ltg=151&mnr=443', 
+#             three_debates_only = True)
