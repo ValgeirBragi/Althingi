@@ -101,6 +101,58 @@ def bill_scrape(bill_url, three_debates_only = False, debate_text = False):
 
     return bill_dict
 
-# Testing
+def debate_scrape(debate_url):
+    url             = req.get(debate_url)
+    debates_soup    = BeautifulSoup(url.content, "html.parser")
+    body            = debates_soup.find('yf')
+    links           = body.find_all('a')
+
+    # All speeches are bolded, so that's how I'll filter out the other links (which are unrelevant/scraped already)
+    debate_links = []
+    for link in links:
+        if re.search(r'<b>', str(link)):
+            debate_links.append(link)
+    
+    # Empty dictionary to keep our information in
+    debate_dict = {}
+    for debate in debate_links:
+        link    = 'https://' + re.search(r'(?<=//).+(?=")', str(debate)).group(0)
+        key     = re.search(r'rad\w+', link).group(0)
+        speaker = re.search(r'(?<=<b>)[^<]+', str(debate)).group(0)
+        
+        # Scraping text
+        url = req.get(link)
+        debate_soup     = BeautifulSoup(url.content, "html.parser")
+        time            = debate_soup.find(class_ = 'main-timi').text
+        debate_strings  = debate_soup.find('div', {'id': 'raeda_efni'})
+        debate_strings  = debate_strings.find_all(class_ = 'ind')
+
+        # Turning the debate_strings into a single string variable
+        debate_text = ''
+        for line in debate_strings:
+            debate_text = debate_text + re.search(r'(?<=\>).+(?=<)', str(line)).group(0) + ' '
+        # Some strings had space at the end, some didn't. So adding a space after every string and removing all double strings
+        debate_text = re.sub(' +', ' ', debate_text)
+
+        # Appending a nested dictionary of the speeches in the debate_dict
+        debate_dict[key] = {
+            'link'          : link,
+            'speaker'       : speaker,
+            'text'          : debate_text,
+            'time_start'    : re.search(r'(?<=\[).+(?=\])', time).group(0) # Removing brackets with regex
+        }
+    
+    return debate_dict
+
+
+# Testing samples:
+
+# Collecting all bills from a yearly session
+# session_scrape(151, session_151)
+
+# Collecting bill information
 # bill_scrape('https://www.althingi.is/thingstorf/thingmalalistar-eftir-thingum/ferill/151/443/?ltg=151&mnr=443', 
 #             three_debates_only = True)
+
+# Collecting information on a single debate
+# debate_scrape('https://www.althingi.is/altext/151/01/l21164717.sgml')
